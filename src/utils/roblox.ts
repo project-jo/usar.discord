@@ -19,9 +19,9 @@ interface UserRank {
 }
 
 export async function getMemberData(userId: string) {
-  const groupId = parseInt(process.env.GROUP_ID!, 10);
-  const guildId = process.env.GUILD_ID!;
-  const apiToken = process.env.API_TOKEN!;
+  const groupId = parseInt(process.env.GROUP_ID, 10);
+  const guildId = process.env.GUILD_ID;
+  const apiToken = process.env.API_TOKEN;
   const baseApiUrl = `https://api.rowifi.xyz/v2/guilds/${guildId}/members`;
   const baseGroupUrl = `https://groups.roblox.com/v2/users`;
   const baseUserUrl = `https://users.roblox.com/v1/users`;
