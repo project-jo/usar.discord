@@ -1,6 +1,7 @@
-import { Client as BaseClient, GatewayIntentBits } from "discord.js";
+import { Client as BaseClient, GatewayIntentBits, EmbedBuilder, User } from "discord.js";
 import { EventService } from "../services/event.js";
 import { CommandService } from "../services/command.js";
+import { getColor } from "../utils/color.js";
 
 export class Client extends BaseClient {
   constructor(token: string) {
@@ -49,5 +50,15 @@ export class Client extends BaseClient {
     } catch (e) {
       console.error(`Failed while registering commands ${e}`);
     }
+  }
+
+  errorEmbed(user: User, title: string, message: string) {
+    const embed = new EmbedBuilder()
+    .setAuthor({ name: user.username, iconURL: user.displayAvatarURL({ extension: 'png', size: 2048 })})
+    .setTitle(title)
+    .setDescription(message)
+    .setColor(getColor('red'))
+
+    return embed
   }
 }

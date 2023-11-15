@@ -18,6 +18,26 @@ interface UserRank {
   full_rank: string
 }
 
+interface RankData {
+  id: number;
+  name: string;
+  rank: number;
+  memberCount: number;
+}
+
+interface PromotionError {
+  status: boolean;
+  message?: string;
+}
+
+interface PromotionSuccess {
+  status: boolean;
+  new?: RankData;
+  old?: RankData;
+}
+
+type PromotionResult = PromotionSuccess | PromotionError;
+
 export async function getMemberData(userId: string) {
   const groupId = parseInt(process.env.GROUP_ID, 10);
   const guildId = process.env.GUILD_ID;
@@ -137,4 +157,89 @@ function getUserRank(rankName: string) {
       full_rank: rankName
     }
   }
+}
+
+async function getUserData(userId: string) {
+  const apiToken = process.env.API_TOKEN;
+  const guildId = process.env.GUILD_ID;
+  const baseApiUrl = `https://api.rowifi.xyz/v2/guilds/${guildId}/members`;
+  const res = await axios.get(`${baseApiUrl}/${userId}`, {
+    headers: {
+      Authorization: `Bot ${apiToken}`
+    }
+  });
+
+  return res.data;
+}
+
+export async function promoteUser(userId: string) {
+  const guildId = process.env.GUILD_ID;
+  const groupId = parseInt(process.env.GROUP_ID, 10);
+  const apiToken = process.env.API_TOKEN;
+  const robloxData = await getUserData(userId);
+  const robloxId = parseInt(robloxData.roblox_id);
+  const baseApiUrl = `https://api.rowifi.xyz/v2/guilds/${guildId}/setrank`;
+  const baseGroupUrl = `https://groups.roblox.com/v2/users`;
+  const baseGroupUri = `https://groups.roblox.com/v1/groups/${groupId}/roles`;
+  const userRank = await axios.get(`${baseGroupUrl}/${robloxId}/groups/roles`);
+  const allRanksData = await axios.get(baseGroupUri);
+  const groupObject = userRank.data.data.find((info: any) => groupId === info.group.id);
+  const rankId = groupObject ? parseInt(groupObject.role.rank) : 0;
+  const allRanks = allRanksData.data.roles;
+  const oldRank = groupObject.role;
+
+  let found: RankData | string | null = null;
+  for (let i = 0; i < allRanks.length; i++) {
+    const role = allRanks[i];
+    const thisRankId = role.rank;
+
+    if (thisRankId === rankId) {
+      const change = (i < allRanks.length - 1) ? i + 1 : null;
+      if (change !== null) {
+        found = (change !== null) ? allRanks[change] : null;
+      } else {
+        found = `You are already at the highest position`;
+      }
+      break;
+    }
+  }
+
+  if (found === null) {
+    const err: PromotionResult = {
+      status: false,
+      message: 'Rank is not found'
+    };
+
+    return err;
+  }
+
+  if (typeof(found) !== 'string') {
+    found['name'] = getUserRank(found.name).full_rank;
+    oldRank['name'] = getUserRank(oldRank.name).full_rank;
+    const data: RankData = found;
+    const oldData: RankData = oldRank;
+    const res: PromotionResult = {
+      status: true,
+      new: data,
+      old: oldData
+    }
+    return res;
+  } else {
+    const err: PromotionResult = {
+      status: false,
+      message: found
+    }
+
+    return err;
+  }
+
+  // const res = await axios.post(baseApiUrl, {
+  //   user_id: robloxId,
+  //   group_id: parseInt(groupId),
+  //   rank_id:
+  // }, {
+  //     headers: {
+  //       'Authorization': `Bot ${apiToken}`
+  //     }
+  //   })
 }
