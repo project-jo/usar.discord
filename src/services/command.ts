@@ -1,7 +1,9 @@
 import { AsciiTable3 } from "ascii-table3";
+import chalk from "chalk";
 import { Collection, REST, Routes } from "discord.js";
 import { Client } from "../struct/client.js";
 import CommandBuilder from "../struct/command.js";
+import { getColor } from "../utils/color.js";
 import { find, readFiles } from "../utils/file.js";
 
 export class CommandService {
@@ -10,14 +12,14 @@ export class CommandService {
   constructor(protected client: Client) { }
 
   async _initialize() {
-    const table = new AsciiTable3('Typy').setHeading('Command', 'Status').setAlignCenter(2);
+    const table = new AsciiTable3(chalk.bold('Typy')).setHeading('Command', 'Status').setAlignCenter(2).setStyle('unicode-round');
     this.commands.clear();
     const paths = await readFiles(`${process.cwd()}/dist/esm/commands`);
     await Promise.all(
       paths.map(async (path) => {
         const command: CommandBuilder = await find(path).catch(() => { });
         this.commands.set(command.name, command);
-        table.addRow(command.name, 'CONNECTED');
+        table.addRow(command.name, chalk.hex(getColor('green'))('CONNECTED'));
       })
     ).catch((e) => {
       console.log(e);
